@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JTL's Personality Test</title>
+    <title>Personality Quiz: Four Temperaments</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,32 +11,7 @@
             margin: 0;
             padding: 20px;
         }
-
-        /* Style for landing page */
-        #landing-page {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #007BFF;
-            color: white;
-            font-size: 2em;
-            text-align: center;
-            opacity: 1;
-            animation: fadeOut 3s forwards; /* Fade out the landing page */
-        }
-
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
-        }
-
         .container {
-            display: none; /* Hide the quiz initially */
             max-width: 800px;
             margin: 0 auto;
             background: #fff;
@@ -44,43 +19,22 @@
             border-radius: 8px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
-
         h1 {
             text-align: center;
             color: #333;
         }
-
-        .progress-bar-container {
-            width: 100%;
-            background-color: #ddd;
-            border-radius: 25px;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 0%;
-            height: 20px;
-            background-color: #4CAF50;
-            border-radius: 25px;
-            text-align: center;
-            color: white;
-        }
-
         .question {
             margin: 20px 0;
         }
-
         .question h2 {
             font-size: 18px;
             color: #333;
         }
-
         .answers label {
             display: block;
             margin-bottom: 10px;
         }
-
-        .submit-btn {
+        .button {
             display: block;
             width: 100%;
             padding: 10px;
@@ -89,12 +43,11 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            text-align: center;
         }
-
-        .submit-btn:hover {
+        .button:hover {
             background-color: #0056b3;
         }
-
         .result {
             margin-top: 20px;
             text-align: center;
@@ -104,95 +57,135 @@
     </style>
 </head>
 <body>
-
-    <!-- Animated Landing Page -->
-    <div id="landing-page">
-        Thank you for choosing JTL's Personality Test
-    </div>
-
-    <!-- Quiz Container -->
-    <div class="container" id="quiz-container">
+    <div class="container">
         <h1>What’s Your Personality Type?</h1>
-
-        <!-- Progress Bar -->
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progress-bar">0%</div>
-        </div>
-
-        <!-- Quiz Questions -->
-        <div class="question">
-            <h2>1. How do you react in stressful situations?</h2>
-            <div class="answers">
-                <label><input type="radio" name="q1" value="phlegmatic"> I try to remain calm and composed, working through the issue at my own pace.</label>
-                <label><input type="radio" name="q1" value="melancholic"> I often feel anxious and overthink the situation.</label>
-                <label><input type="radio" name="q1" value="choleric"> I jump into action and take charge to solve the problem.</label>
-                <label><input type="radio" name="q1" value="sanguine"> I prefer to lighten the mood and encourage others not to worry too much.</label>
+        <div id="quiz">
+            <div class="question" id="question-container">
+                <h2 id="question-text"></h2>
+                <div id="answers-container"></div>
             </div>
+            <button id="next-btn" class="button">Next</button>
+            <button id="submit-btn" class="button" style="display:none;">Submit</button>
+            <div class="result" id="result"></div>
         </div>
-        
-        <!-- Additional questions go here -->
-
-        <button class="submit-btn" onclick="showResult()">Submit</button>
-        <div class="result" id="result"></div>
     </div>
 
     <script>
-        // Hide landing page and show quiz after 3 seconds
-        window.onload = function () {
-            setTimeout(function () {
-                document.getElementById('landing-page').style.display = 'none';
-                document.getElementById('quiz-container').style.display = 'block';
-            }, 3000); // 3000 milliseconds = 3 seconds
+        // Define arrays of questions by temperament type
+        const phlegmaticQuestions = [
+            { question: "How do you react in stressful situations?", options: { phlegmatic: "I try to remain calm and composed.", melancholic: "I feel anxious and overthink.", choleric: "I take charge to solve the problem.", sanguine: "I lighten the mood to diffuse tension." }},
+            { question: "What motivates you?", options: { phlegmatic: "Helping others and being reliable.", melancholic: "Analyzing complex situations.", choleric: "Setting goals and achieving success.", sanguine: "Meeting new people and enjoying life." }},
+            // Add more questions...
+        ];
+
+        const melancholicQuestions = [
+            { question: "How do you handle failure?", options: { phlegmatic: "I calmly accept it and move on.", melancholic: "I reflect deeply on what went wrong.", choleric: "I quickly find a solution.", sanguine: "I shrug it off and try something new." }},
+            // Add more questions...
+        ];
+
+        const sanguineQuestions = [
+            { question: "What best describes your decision-making process?", options: { melancholic: "I make careful decisions.", choleric: "I act quickly with confidence.", phlegmatic: "I go with the flow.", sanguine: "I rely on instincts and feelings." }},
+            // Add more questions...
+        ];
+
+        const cholericQuestions = [
+            { question: "How do you behave in group settings?", options: { phlegmatic: "I contribute without causing disruption.", melancholic: "I prefer to work alone.", choleric: "I take the lead.", sanguine: "I enjoy socializing and engaging." }},
+            // Add more questions...
+        ];
+
+        const crossTypeQuestions = [
+            { question: "How do you handle high-pressure social situations?", options: { "choleric-sanguine": "I take charge and keep things organized.", "phlegmatic-melancholic": "I stay calm and mediate.", "melancholic-choleric": "I get anxious but focus on details.", "sanguine-phlegmatic": "I lighten the mood and diffuse tension." }},
+            // Add more cross-type questions...
+        ];
+
+        // Shuffle an array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Randomly pick 5 questions from each temperament type and 4 from cross-type
+        const selectedQuestions = [
+            ...shuffle(phlegmaticQuestions).slice(0, 5),
+            ...shuffle(melancholicQuestions).slice(0, 5),
+            ...shuffle(sanguineQuestions).slice(0, 5),
+            ...shuffle(cholericQuestions).slice(0, 5),
+            ...shuffle(crossTypeQuestions).slice(0, 4)
+        ];
+
+        let currentQuestionIndex = 0;
+        let scores = {
+            phlegmatic: 0,
+            melancholic: 0,
+            sanguine: 0,
+            choleric: 0,
+            "phlegmatic-melancholic": 0,
+            "sanguine-phlegmatic": 0,
+            "choleric-sanguine": 0,
+            "melancholic-choleric": 0
         };
 
-        const totalQuestions = document.querySelectorAll('.question').length;
-        let progressBar = document.getElementById('progress-bar');
+        // Function to show the next question
+        function showNextQuestion() {
+            const currentQuestion = selectedQuestions[currentQuestionIndex];
+            document.getElementById('question-text').textContent = currentQuestion.question;
 
-        // Function to update the progress bar
-        function updateProgressBar() {
-            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
-            const progressPercent = (answeredQuestions / totalQuestions) * 100;
-            progressBar.style.width = progressPercent + "%";
-            progressBar.innerHTML = Math.round(progressPercent) + "%";
-        }
-
-        // Listen for changes on radio buttons to update progress
-        document.querySelectorAll('input[type="radio"]').forEach((input) => {
-            input.addEventListener('change', updateProgressBar);
-        });
-
-        function showResult() {
-            const answers = document.querySelectorAll('input[type="radio"]:checked');
-            let scores = {
-                phlegmatic: 0,
-                melancholic: 0,
-                sanguine: 0,
-                choleric: 0,
-                "phlegmatic-melancholic": 0,
-                "sanguine-phlegmatic": 0,
-                "choleric-sanguine": 0,
-                "melancholic-choleric": 0
-            };
-
-            answers.forEach(answer => {
-                scores[answer.value]++;
+            // Display answer options
+            const answersContainer = document.getElementById('answers-container');
+            answersContainer.innerHTML = ''; // Clear previous options
+            Object.keys(currentQuestion.options).forEach((key) => {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'answer';
+                input.value = key;
+                label.appendChild(input);
+                label.append(currentQuestion.options[key]);
+                answersContainer.appendChild(label);
             });
 
-            let result = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-
-            let personalityDescription = {
-                phlegmatic: "You are calm, composed, and often seen as the stabilizer in any situation.",
-                melancholic: "You are introspective, thoughtful, and highly detail-oriented.",
-                sanguine: "You are energetic, sociable, and always looking for a good time.",
-                choleric: "You are assertive, decisive, and take charge of situations.",
-                "phlegmatic-melancholic": "You are calm and thoughtful, with a strong preference for peace and reflection.",
-                "sanguine-phlegmatic": "You are sociable but easygoing, enjoying the company of others without stress.",
-                "choleric-sanguine": "You are assertive and outgoing, a natural leader with plenty of energy.",
-                "melancholic-choleric": "You are driven and analytical, with a balance between being goal-oriented and thoughtful."
-            };
-
-            document.getElementById('result').innerHTML = `Your personality type is: <strong>${result.charAt(0).toUpperCase() + result.slice(1)}</strong><br>${personalityDescription[result]}`;
+            // Show the submit button only on the last question
+            if (currentQuestionIndex === selectedQuestions.length - 1) {
+                document.getElementById('next-btn').style.display = 'none';
+                document.getElementById('submit-btn').style.display = 'block';
+            }
         }
+
+        // Next button event listener
+        document.getElementById('next-btn').addEventListener('click', () => {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                scores[selectedAnswer.value]++;
+                currentQuestionIndex++;
+                showNextQuestion();
+            } else {
+                alert("Please select an answer!");
+            }
+        });
+
+        // Submit button event listener
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                scores[selectedAnswer.value]++;
+
+                // Determine the dominant main and cross types
+                const mainType = ['phlegmatic', 'melancholic', 'sanguine', 'choleric'].reduce((a, b) => scores[a] > scores[b] ? a : b);
+                const crossType = ['phlegmatic-melancholic', 'sanguine-phlegmatic', 'choleric-sanguine', 'melancholic-choleric'].reduce((a, b) => scores[a] > scores[b] ? a : b);
+
+                // Display the result
+                document.getElementById('result').innerHTML = `<strong>Main Type:</strong> ${mainType.charAt(0).toUpperCase() + mainType.slice(1)}<br><strong>Cross Type:</strong> ${crossType.charAt(0).toUpperCase() + crossType.slice(1)}`;
+                document.getElementById('submit-btn').style.display = 'none';
+            } else {
+                alert("Please select an answer!");
+            }
+        });
+
+        // Show the first question when the page loads
+        showNextQuestion();
     </script>
 </body>
 </html>
